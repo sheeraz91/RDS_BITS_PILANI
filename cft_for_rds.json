@@ -78,8 +78,8 @@
               ,
               "Engine": "postgres",
               "EngineVersion": "11.10",
-              "MasterUsername": "pgadmin",
-              "MasterUserPassword": "pgadmin1234",
+              "MasterUsername": {"Fn::Join": ["", ["{{resolve:secretsmanager:",{"Ref": "MyRDSSecret"},":SecretString:username}}"] ] },
+              "MasterUserPassword": {"Fn::Join": ["", ["{{resolve:secretsmanager:",{"Ref": "MyRDSSecret"},":SecretString:password}}"] ] },
               "MultiAZ": "false",
               "Port": "5432",
               "PubliclyAccessible": "false",
@@ -116,6 +116,25 @@
                   ]
                 }
               }      
-        },    
-        "Outputs": {}
+        }, 
+        "MyRDSSecret": {
+          "Type": "AWS::SecretsManager::Secret",
+          "Properties": {
+            "Description": "This is a Secrets Manager secret for an RDS DB instance",
+            "GenerateSecretString": {
+              "SecretStringTemplate": "{\"username\": \"pgadmin\"}",
+              "GenerateStringKey": "password",
+              "PasswordLength": 16,
+              "ExcludeCharacters": "\"@/\\"
+            }
+          }
+        }, 
+        "SecretRDSInstanceAttachment": {
+          "Type": "AWS::SecretsManager::SecretTargetAttachment",
+          "Properties": {
+            "SecretId": {"Ref": "MyRDSSecret"},
+            "TargetId": {"Ref": "rdsDBInstance"},
+            "TargetType": "AWS::RDS::DBInstance"
+          }         
+        }
     }
