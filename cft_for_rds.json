@@ -1,140 +1,150 @@
 {
-    "AWSTemplateFormatVersion": "2010-09-09",
-        "Description": "",
-        "Metadata": {},
-        "Parameters": {},
-        "Mappings": {},
-        "Conditions": {},
-        "Resources": {
-            "RDSBitsVpc": {
-              "Type": "AWS::EC2::VPC",
-              "Properties": {
-                "CidrBlock": "192.168.0.0/16",
-                "Tags":[{ "Key": "Name", "Value":  "RDSBitsVpc" }]
+  "AWSTemplateFormatVersion": "2010-09-09",
+      "Description": "",
+      "Metadata": {},
+      "Parameters": {},
+      "Mappings": {},
+      "Conditions": {},
+      "Resources": {
+          "RDSBitsVpc": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+              "CidrBlock": "192.168.0.0/16",
+              "Tags":[{ "Key": "Name", "Value":  "RDSBitsVpc" }]
+            }
+          },
+        "PrivateSubnet1": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": "ap-south-1a",
+            "VpcId": 
+            { "Ref": "RDSBitsVpc" }
+            ,
+            "CidrBlock": "192.168.1.0/24",
+            "Tags": [
+                { "Key": "Name",
+                   "Value":  "PrivateSubnet1" 
               }
-            },
-          "PrivateSubnet1": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-              "AvailabilityZone": "ap-south-1a",
-              "VpcId": 
-              { "Ref": "RDSBitsVpc" }
-              ,
-              "CidrBlock": "192.168.1.0/24",
-              "Tags": [
-                  { "Key": "Name",
-                     "Value":  "PrivateSubnet1" 
-                }
-              ]
-            }
-          },
-          "PrivateSubnet2": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-              "AvailabilityZone": "ap-south-1b",
-              "VpcId": 
-              { "Ref": "RDSBitsVpc" }
-              ,
-              "CidrBlock": "192.168.2.0/24",
-              "Tags": [
-                  { "Key": "Name",
-                     "Value":  "PrivateSubnet2" 
-                }
-              ]
-            }
-          },
-          
-          "rdsDBSubnetGroup": {
-             "Type": "AWS::RDS::DBSubnetGroup",
-             "Properties": {
-                "DBSubnetGroupDescription": "Subnet for Rds",
-                "SubnetIds": [ 
-                { "Ref": "PrivateSubnet2" },
-                
-                { "Ref": "PrivateSubnet1" }
-                
-                 ],
-                "Tags": [
-                { "Key": "Name", "Value":  "rdsDBSubnetGroup" }
-                ]
-             }
-          },
-          
-          "rdsDBInstance": {
-            "Type": "AWS::RDS::DBInstance",
-            "Properties": {
-              "AllocatedStorage": "20",
-              "DBInstanceClass": "db.t2.micro",
-              "AllowMajorVersionUpgrade": "false",
-              "AutoMinorVersionUpgrade": "false",
-              "BackupRetentionPeriod": "7",
-              "DBInstanceIdentifier": "myRdsBitsDemo",
-              "DBName": "my_bits_db",
-              "VPCSecurityGroups":[
-              { "Ref": "rdsSecurityGroup" }
-              ],
-              "DBSubnetGroupName": 
-              { "Ref": "rdsDBSubnetGroup" } 
-              ,
-              "Engine": "postgres",
-              "EngineVersion": "11.10",
-              "MasterUsername": {"Fn::Join": ["", ["{{resolve:secretsmanager:",{"Ref": "MyRDSSecret"},":SecretString:username}}"] ] },
-              "MasterUserPassword": {"Fn::Join": ["", ["{{resolve:secretsmanager:",{"Ref": "MyRDSSecret"},":SecretString:password}}"] ] },
-              "MultiAZ": "false",
-              "Port": "5432",
-              "PubliclyAccessible": "false",
-              "StorageType": "gp2",
-              "Tags": [ 
-              { "Key": "Name",
-                 "Value":  "myRdsBitsDemo"
-                }
-              ] 
-            }
-          }  ,
-            "rdsSecurityGroup" : {
-                "Type" : "AWS::EC2::SecurityGroup",
-                "Properties" : {
-                  "GroupDescription" : "Allow RDS Connections",
-                  "SecurityGroupIngress" : [{
-                    "IpProtocol" : "tcp",
-                    "FromPort" : 5432,
-                    "ToPort" : 5432,
-                    "CidrIp" : "0.0.0.0/0"
-                 }],
-                 "SecurityGroupEgress" : [{
-                    "IpProtocol" : "tcp",
-                    "FromPort" : 80,
-                    "ToPort" : 80,
-                    "CidrIp" : "0.0.0.0/0"
-                 }],
-                  "VpcId" : 
-                  { "Ref": "RDSBitsVpc" }
-                  ,
-                  
-                  "Tags":[
-                  { "Key": "Name", "Value":  "rdsSecurityGroup" }
-                  ]
-                }
-              }      
-        }, 
-        "MyRDSSecret": {
-          "Type": "AWS::SecretsManager::Secret",
-          "Properties": {
-            "Description": "This is a Secrets Manager secret for an RDS DB instance",
-            "GenerateSecretString": {
-              "SecretStringTemplate": "{\"username\": \"pgadmin\"}",
-              "GenerateStringKey": "password",
-              "PasswordLength": 16,
-              "ExcludeCharacters": "\"@/\\"
-            }
+            ]
           }
-        }, 
-        "SecretRDSInstanceAttachment": {
-          "Type": "AWS::SecretsManager::SecretTargetAttachment",
+        },
+        "PrivateSubnet2": {
+          "Type": "AWS::EC2::Subnet",
           "Properties": {
-            "SecretId": {"Ref": "MyRDSSecret"},
-            "TargetId": {"Ref": "rdsDBInstance"},
-            "TargetType": "AWS::RDS::DBInstance"
-          }         
-        }
-    }
+            "AvailabilityZone": "ap-south-1b",
+            "VpcId": 
+            { "Ref": "RDSBitsVpc" }
+            ,
+            "CidrBlock": "192.168.2.0/24",
+            "Tags": [
+                { "Key": "Name",
+                   "Value":  "PrivateSubnet2" 
+              }
+            ]
+          }
+        },
+        
+        "rdsDBSubnetGroup": {
+           "Type": "AWS::RDS::DBSubnetGroup",
+           "Properties": {
+              "DBSubnetGroupDescription": "Subnet for Rds",
+              "SubnetIds": [ 
+              { "Ref": "PrivateSubnet2" },
+              
+              { "Ref": "PrivateSubnet1" }
+              
+               ],
+              "Tags": [
+              { "Key": "Name", "Value":  "rdsDBSubnetGroup" }
+              ]
+           }
+        },
+        "rdsDBInstance": {
+          "Type": "AWS::RDS::DBInstance",
+          "Properties": {
+            "AllocatedStorage": "20",
+            "DBInstanceClass": "db.t2.micro",
+            "AllowMajorVersionUpgrade": "false",
+            "AutoMinorVersionUpgrade": "false",
+            "BackupRetentionPeriod": "7",
+            "DBInstanceIdentifier": "myRdsBitsDemo",
+            "DBName": "my_bits_db",
+            "VPCSecurityGroups":[
+            { "Ref": "rdsSecurityGroup" }
+            ],
+            "DBSubnetGroupName": 
+            { "Ref": "rdsDBSubnetGroup" } 
+            ,
+            "Engine": "postgres",
+            "EngineVersion": "11.10",
+            "MasterUsername": {
+              "Fn::Sub":"{{resolve:secretsmanager:${MyRDSSecret}::username}}" 
+              },
+            "MasterUserPassword": {
+              "Fn::Sub":"{{resolve:secretsmanager:${MyRDSSecret}::password}}"
+              },
+            "MultiAZ": "false",
+            "Port": "5432",
+            "PubliclyAccessible": "false",
+            "StorageType": "gp2",
+            "Tags": [ 
+            { "Key": "Name",
+               "Value":  "myRdsBitsDemo"
+              }
+            ] 
+          }
+        }  ,
+          "rdsSecurityGroup" : {
+              "Type" : "AWS::EC2::SecurityGroup",
+              "Properties" : {
+                "GroupDescription" : "Allow RDS Connections",
+                "SecurityGroupIngress" : [{
+                  "IpProtocol" : "tcp",
+                  "FromPort" : 5432,
+                  "ToPort" : 5432,
+                  "CidrIp" : "0.0.0.0/0"
+               }],
+               "SecurityGroupEgress" : [{
+                  "IpProtocol" : "tcp",
+                  "FromPort" : 80,
+                  "ToPort" : 80,
+                  "CidrIp" : "0.0.0.0/0"
+               }],
+                "VpcId" : 
+                { "Ref": "RDSBitsVpc" }
+                ,
+                
+                "Tags":[
+                { "Key": "Name", "Value":  "rdsSecurityGroup" }
+                ]
+              }
+            },  
+            "MyRDSSecret": {
+              "Type": "AWS::SecretsManager::Secret",
+              "Properties": {
+                "GenerateSecretString": {
+                  "SecretStringTemplate": "{\"username\": \"pgadmin\"}",
+                  "GenerateStringKey": "password",
+                  "PasswordLength": 16,
+                  "ExcludeCharacters": "\"@/\\"
+                },
+                "Tags":[
+                  { "Key": "Name", "Value":  "MyRDSSecret" }
+                ]
+              }
+            }, 
+            "SecretRDSInstanceAttachment": {
+              "Type": "AWS::SecretsManager::SecretTargetAttachment",
+              "Properties": {
+                "SecretId": {
+                  "Ref": "MyRDSSecret"
+                },
+                "TargetId": {
+                  "Ref": "rdsDBInstance"
+                },
+                "TargetType": "AWS::RDS::DBInstance"
+              }         
+            }               
+      },
+      "Outputs": {}      
+  }
